@@ -1,0 +1,606 @@
+import React, { useState } from "react";
+import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
+import { 
+  ChevronLeft, 
+  Target01, 
+  Users01, 
+  Zap, 
+  CheckCircle, 
+  Plus,
+  Upload01,
+  File02,
+  XClose,
+  Stars01,
+  LayoutAlt01,
+  Clock,
+  HelpCircle,
+  ArrowRight
+} from "@untitled-ui/icons-react";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "./ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
+import { cn } from "./ui/utils";
+import { Link, useNavigate } from "react-router";
+import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
+import { Badge } from "./design-system";
+
+const STEPS = [
+  { id: "objective", label: "Objective", icon: Target01 },
+  { id: "context", label: "Context", icon: Users01 },
+  { id: "creative", label: "Creative", icon: Stars01 },
+  { id: "generate", label: "Review", icon: Zap },
+];
+
+const PREDEFINED_AUDIENCES = [
+  "Health-conscious commuters",
+  "Busy parents (25-45)",
+  "Fitness enthusiasts",
+  "Eco-friendly shoppers"
+];
+
+const PREDEFINED_PRODUCTS = [
+  "Cirkul Starter Kit",
+  "Blueberry Flavor Sips",
+  "Orange Flavor Sips",
+  "Cirkul Water Bottle (32oz)"
+];
+
+export default function CreateFlow() {
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(0);
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    objective: "offer", // "offer" or "brand"
+    brand: "Cirkul",
+    audience: "Health-conscious commuters",
+    platform: "Meta",
+    ratio: "9:16",
+    prompt: "",
+    product: "None (Global Brand)",
+    files: [] as File[],
+    productImages: [] as File[],
+  });
+
+  // Modal States
+  const [showAddAudience, setShowAddAudience] = useState(false);
+  const [newAudience, setNewAudience] = useState("");
+  const [audiences, setAudiences] = useState(PREDEFINED_AUDIENCES);
+
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState("");
+  const [products, setProducts] = useState(PREDEFINED_PRODUCTS);
+
+  const nextStep = () => {
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleLaunch();
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const handleLaunch = () => {
+    sessionStorage.setItem("pending_generation", JSON.stringify(formData));
+    toast.success("Generation request added to queue!", {
+      description: "You can track the progress in the My Generations menu.",
+    });
+    navigate("/generations");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFormData({...formData, files: [...formData.files, ...Array.from(e.target.files)]});
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFormData({...formData, files: formData.files.filter((_, i) => i !== index)});
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFormData({...formData, productImages: [...formData.productImages, ...Array.from(e.target.files)]});
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData({...formData, productImages: formData.productImages.filter((_, i) => i !== index)});
+  };
+
+  const addNewAudience = () => {
+    if (newAudience.trim()) {
+      setAudiences([...audiences, newAudience.trim()]);
+      setFormData({...formData, audience: newAudience.trim()});
+      setNewAudience("");
+      setShowAddAudience(false);
+    }
+  };
+
+  const addNewProduct = () => {
+    if (newProduct.trim()) {
+      setProducts([...products, newProduct.trim()]);
+      setFormData({...formData, product: newProduct.trim()});
+      setNewProduct("");
+      setShowAddProduct(false);
+    }
+  };
+
+  const renderStepIcon = (index: number) => {
+    const StepIcon = STEPS[index].icon;
+    const isCompleted = index < currentStep;
+    const isActive = index === currentStep;
+
+    return (
+      <div className={cn(
+        "size-8 sm:size-9 md:size-10 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-300 border",
+        isCompleted ? "bg-signal border-signal text-white" :
+        isActive ? "bg-white border-signal text-signal shadow-sm" :
+        "bg-[#F9FAFB] border-[#F2F0EB] text-[#667085]"
+      )}>
+        {isCompleted ? <CheckCircle className="size-4 sm:size-5" /> : <StepIcon className="size-4 sm:size-5" />}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex min-h-screen bg-surface font-body text-body-text overflow-hidden">
+      <Sidebar />
+      <MobileNav />
+
+      <main className="flex-1 flex flex-col h-screen overflow-hidden p-1 sm:p-2 md:p-3 lg:p-4">
+        <div className="flex-1 bg-white rounded-[16px] sm:rounded-[20px] lg:rounded-[24px] border border-[#F2F0EB] shadow-sm hover:shadow-md hover:border-[#D0D5DD] transition-all duration-300 flex flex-col overflow-hidden relative">
+        {/* Header */}
+        <header className="bg-white border-b border-[#F2F0EB] px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex items-center justify-between z-20 shadow-sm shrink-0">
+          <div className="flex items-center gap-3 sm:gap-6 md:gap-8 overflow-x-auto flex-1 scrollbar-hide">
+            <Link to="/app" className="p-2 rounded-xl border border-transparent hover:border-[#F2F0EB] hover:bg-[#F9FAFB] transition-all text-[#667085] hover:text-[#101828] shrink-0">
+              <ChevronLeft className="size-4 sm:size-5" />
+            </Link>
+            <div className="h-6 w-px bg-[#F2F0EB] hidden md:block shrink-0" />
+            <div className="flex items-center gap-4 sm:gap-6 md:gap-10">
+              {STEPS.map((step, index) => (
+                <div key={step.id} className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+                  {renderStepIcon(index)}
+                  <div className="hidden md:block">
+                    <p className={cn(
+                      "text-[10px] font-bold uppercase tracking-widest leading-none mb-1",
+                      index <= currentStep ? "text-signal" : "text-[#667085]"
+                    )}>Step 0{index + 1}</p>
+                    <p className={cn(
+                      "text-[12px] sm:text-[13px] font-display font-bold leading-none",
+                      index === currentStep ? "text-[#101828]" : "text-[#667085]"
+                    )}>{step.label}</p>
+                  </div>
+                  {index < STEPS.length - 1 && (
+                    <div className="ml-2 sm:ml-4 md:ml-6 h-px w-4 sm:w-6 md:w-8 bg-[#F2F0EB] hidden lg:block shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 p-1.5 bg-[#F9FAFB] border border-[#F2F0EB] rounded-xl">
+              <span className="px-3 py-1 text-[12px] font-bold text-[#101828]">Ask AI for help</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10 lg:p-16">
+          <div className="max-w-4xl mx-auto pb-20 sm:pb-24">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="space-y-8 sm:space-y-10 md:space-y-12"
+              >
+                {/* Step Title Section */}
+                <div className="space-y-2">
+                  <h1 className="text-2xl sm:text-3xl font-display font-bold text-[#101828] tracking-tight">
+                    {currentStep === 0 && "Define your core objective"}
+                    {currentStep === 1 && "Campaign configuration"}
+                    {currentStep === 2 && "The Creative Workspace"}
+                    {currentStep === 3 && "Final review & Batch launch"}
+                  </h1>
+                  <p className="text-[#667085] font-medium text-[14px] sm:text-[15px]">
+                    {currentStep === 0 && "Choose the primary goal for this creative batch to help our AI prioritize performance metrics."}
+                    {currentStep === 1 && "Specify your target audience and distribution channel context."}
+                    {currentStep === 2 && "Provide your brief assets. The more context you provide, the better the output."}
+                    {currentStep === 3 && "Verify your settings before we fire up the generation engine."}
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-[20px] sm:rounded-[24px] p-5 sm:p-6 md:p-8 border border-[#F2F0EB] relative overflow-hidden shadow-sm">
+                  <div className="absolute top-0 right-0 w-80 h-80 bg-[#FCFBF9] rounded-full blur-[120px] opacity-40 -mr-40 -mt-40" />
+                  
+                  <div className="relative z-10 space-y-6 sm:space-y-8">
+                    {currentStep === 0 && (
+                      <div className="grid grid-cols-1 gap-4">
+                        {[
+                          { id: "offer", label: "Offer Led Creatives", desc: "Optimized for direct response, discounts, and high-velocity seasonal promotions.", icon: Zap, variant: "primary" as const },
+                          { id: "brand", label: "Evergreen Brand", desc: "Long-term storytelling focusing on core brand values and lifestyle proposition.", icon: Stars01, variant: "gray" as const },
+                        ].map(item => (
+                              <button
+                            key={item.id}
+                            onClick={() => setFormData({...formData, objective: item.id})}
+                            className={cn(
+                              "flex flex-col gap-3 sm:gap-4 p-5 sm:p-6 rounded-[18px] sm:rounded-[20px] border text-left transition-all duration-300 h-full group relative overflow-hidden shadow-sm",
+                              formData.objective === item.id
+                                ? "border-signal bg-[#F9FAFB] ring-1 ring-signal/20"
+                                : "border-[#F2F0EB] hover:border-signal/20 bg-white hover:shadow-md"
+                            )}
+                          >
+                            <div className="size-10 sm:size-12 rounded-lg sm:rounded-xl bg-[#F9FAFB] border border-[#F2F0EB] flex items-center justify-center group-hover:bg-white transition-colors">
+                              <item.icon className={cn("size-5 sm:size-6", formData.objective === item.id ? "text-signal" : "text-[#667085]")} />
+                            </div>
+                            <div>
+                              <h3 className="text-lg sm:text-xl font-display font-bold text-ink tracking-tight group-hover:text-signal transition-colors">{item.label}</h3>
+                              <p className="text-muted-text mt-1 sm:mt-2 text-[13px] sm:text-[14px] leading-relaxed">{item.desc}</p>
+                            </div>
+                            {formData.objective === item.id && (
+                              <div className="absolute top-3 sm:top-4 right-3 sm:right-4 text-signal">
+                                <CheckCircle className="size-4 sm:size-5" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {currentStep === 1 && (
+                      <div className="space-y-6 sm:space-y-8">
+                        <div className="grid grid-cols-1 gap-5 sm:gap-6">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[12px] font-bold uppercase tracking-widest text-muted-text">Target Audience</Label>
+                              <button onClick={() => setShowAddAudience(true)} className="text-signal text-[12px] font-bold flex items-center gap-1 hover:underline">
+                                <Plus className="size-3" /> Create New
+                              </button>
+                            </div>
+                            <Select 
+                              value={formData.audience} 
+                              onValueChange={(v) => setFormData({...formData, audience: v})}
+                            >
+                              <SelectTrigger className="h-12 rounded-[14px] border-[#F2F0EB] bg-[#F9FAFB] px-4 focus:bg-white transition-all text-[15px] shadow-sm">
+                                <SelectValue placeholder="Select audience" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {audiences.map(a => (
+                                  <SelectItem key={a} value={a}>{a}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-3">
+                            <Label className="text-[12px] font-bold uppercase tracking-widest text-muted-text">Primary Platform</Label>
+                            <div className="h-12 rounded-[14px] border border-[#F2F0EB] bg-[#F9FAFB] px-4 flex items-center gap-3 shadow-sm">
+                              <div className="size-8 rounded-lg bg-signal flex items-center justify-center text-white shrink-0">
+                                <LayoutAlt01 className="size-4" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-[14px] font-bold text-ink leading-tight">Meta (Facebook & IG)</p>
+                                <p className="text-[10px] text-signal font-bold uppercase tracking-wider">Enterprise Channel Active</p>
+                              </div>
+                              <Badge variant="indigo">Current Choice</Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 sm:space-y-4">
+                          <Label className="text-[12px] font-bold uppercase tracking-widest text-muted-text">Aspect Ratio & Placement</Label>
+                          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                            {[
+                              { id: "9:16", label: "Vertical", desc: "Stories & Reels", icon: Clock },
+                              { id: "4:5", label: "Social", desc: "Main Feed", icon: LayoutAlt01 },
+                              { id: "1:1", label: "Square", desc: "Grid & Sidebar", icon: File02 },
+                            ].map(r => (
+                                  <button
+                                key={r.id}
+                                onClick={() => setFormData({...formData, ratio: r.id})}
+                                className={cn(
+                                  "p-3 sm:p-4 rounded-[14px] sm:rounded-[16px] border text-left transition-all duration-300 relative group shadow-sm",
+                                  formData.ratio === r.id ? "border-signal bg-[#F9FAFB] ring-1 ring-signal/20" : "border-[#F2F0EB] hover:border-signal/10 bg-white"
+                                )}
+                              >
+                                <p className="font-bold text-ink text-sm sm:text-base tracking-tight group-hover:text-signal transition-colors">{r.id}</p>
+                                <p className="text-[11px] sm:text-[12px] text-muted-text mt-0.5 sm:mt-1 font-medium">{r.desc}</p>
+                                {formData.ratio === r.id && <div className="absolute top-3 sm:top-4 right-3 sm:right-4 size-2 bg-signal rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]" />}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentStep === 2 && (
+                      <div className="space-y-8">
+                        <div className="space-y-4">
+                           <div className="flex items-center justify-between">
+                              <Label className="text-[12px] font-bold uppercase tracking-widest text-muted-text">Associated Product</Label>
+                              <button onClick={() => setShowAddProduct(true)} className="text-signal text-[12px] font-bold flex items-center gap-1 hover:underline">
+                                <Plus className="size-3" /> Register Product
+                              </button>
+                           </div>
+                           <Select 
+                             value={formData.product} 
+                             onValueChange={(v) => setFormData({...formData, product: v})}
+                           >
+                             <SelectTrigger className="h-12 rounded-[14px] border-[#F2F0EB] bg-[#F9FAFB] px-4 focus:bg-white transition-all text-[15px] shadow-sm">
+                               <SelectValue placeholder="Select product context" />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="None (Global Brand)">General Brand Message</SelectItem>
+                               {products.map(p => (
+                                 <SelectItem key={p} value={p}>{p}</SelectItem>
+                               ))}
+                             </SelectContent>
+                           </Select>
+                        </div>
+
+                        <div className="space-y-4">
+                           <Label className="text-[12px] font-bold uppercase tracking-widest text-muted-text">Product Images (Optional)</Label>
+                           <div 
+                             className="border border-dashed border-[#F2F0EB] rounded-[16px] p-4 flex items-center gap-4 bg-[#F9FAFB] hover:bg-white hover:border-signal/30 transition-all cursor-pointer group shadow-sm"
+                             onClick={() => document.getElementById('image-upload')?.click()}
+                           >
+                             <input type="file" id="image-upload" accept="image/*" className="hidden" multiple onChange={handleImageUpload} />
+                              <div className="size-10 rounded-[10px] bg-[#F9FAFB] border border-[#F2F0EB] flex items-center justify-center shrink-0 group-hover:bg-white transition-all shadow-sm">
+                               <Upload01 className="text-signal size-5" />
+                             </div>
+                             <div>
+                               <h4 className="text-[14px] font-bold text-ink">Upload product shots</h4>
+                               <p className="text-muted-text text-[12px] font-medium">PNG or JPG up to 10MB</p>
+                             </div>
+                           </div>
+                           
+                           {formData.productImages.length > 0 && (
+                             <div className="flex flex-wrap gap-2">
+                               {formData.productImages.map((file, i) => (
+                                 <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-border-subtle rounded-lg text-[12px] font-bold text-ink shadow-sm group">
+                                   <File02 className="text-signal size-3.5" />
+                                   <span className="max-w-[150px] truncate">{file.name}</span>
+                                   <button onClick={(e) => { e.stopPropagation(); removeImage(i); }} className="hover:text-danger ml-1 transition-colors">
+                                     <XClose className="size-3.5" />
+                                   </button>
+                                 </div>
+                               ))}
+                             </div>
+                           )}
+                        </div>
+
+                        <div className="space-y-6">
+                           <div className="flex flex-col gap-4">
+                              <Label className="text-[12px] font-bold uppercase tracking-widest text-muted-text">Primary Content Method</Label>
+                             <div 
+                                className="border-2 border-dashed border-[#F2F0EB] rounded-[24px] p-8 flex flex-col items-center justify-center bg-[#F9FAFB] hover:bg-white hover:border-signal/30 transition-all cursor-pointer group shadow-sm"
+                                onClick={() => document.getElementById('file-upload')?.click()}
+                              >
+                                <input type="file" id="file-upload" className="hidden" multiple onChange={handleFileUpload} />
+                            <div className="size-16 rounded-[16px] bg-[#F9FAFB] border border-[#F2F0EB] flex items-center justify-center mb-4 group-hover:bg-white transition-all shadow-sm">
+                                  <Upload01 className="text-signal size-6" />
+                                </div>
+                                <h4 className="text-xl font-display font-bold text-ink tracking-tight">Drop your brief here</h4>
+                                <p className="text-muted-text mt-1 text-[14px] font-medium max-w-sm text-center">We support PDF, DOCX, and high-res imagery for context.</p>
+                              </div>
+
+                              {formData.files.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                  {formData.files.map((file, i) => (
+                                    <div key={i} className="flex items-center gap-2 px-4 py-2 bg-white border border-border-subtle rounded-[12px] text-[13px] font-bold text-ink shadow-sm group">
+                                      <File02 className="text-signal size-4" />
+                                      {file.name}
+                                      <button onClick={(e) => { e.stopPropagation(); removeFile(i); }} className="hover:text-danger ml-1 transition-colors">
+                                        <XClose className="size-4" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                           </div>
+
+                           <div className="space-y-3">
+                              <Label className="text-[12px] font-bold uppercase tracking-widest text-muted-text opacity-50">Manual Prompt Instructions (Optional)</Label>
+                              <Textarea 
+                                placeholder="Describe any specific visual requirements or copy directions that aren't in your document..."
+                                className="min-h-[100px] w-full p-4 rounded-[16px] border border-[#F2F0EB] bg-[#F9FAFB] focus:bg-white focus:border-signal/40 focus:ring-0 text-[15px] leading-relaxed transition-all shadow-sm"
+                                value={formData.prompt}
+                                onChange={(e) => setFormData({...formData, prompt: e.target.value})}
+                              />
+                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentStep === 3 && (
+                      <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <section className="space-y-4">
+                            <h3 className="text-[12px] font-bold uppercase tracking-[0.2em] text-muted-text flex items-center gap-2">
+                               <CheckCircle className="size-4" /> Pipeline config
+                            </h3>
+                            <div className="space-y-1">
+                              {[
+                                { label: "Objective", value: formData.objective === "offer" ? "OFFER LED" : "EVERGREEN", isBadge: true },
+                                { label: "Target Product", value: formData.product },
+                                { label: "Audience", value: formData.audience },
+                                { label: "Channel", value: `Meta (${formData.ratio})` },
+                              ].map((item, i) => (
+                                <div key={i} className="flex items-center justify-between py-3 border-b border-border-subtle/50 last:border-0">
+                                  <span className="text-[14px] font-medium text-muted-text">{item.label}</span>
+                                  {item.isBadge ? (
+                                    <Badge variant="indigo">{item.value}</Badge>
+                                  ) : (
+                                    <span className="text-[14px] font-bold text-ink text-right">{item.value}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="space-y-4">
+                            <h3 className="text-[12px] font-bold uppercase tracking-[0.2em] text-muted-text flex items-center gap-2">
+                               <File02 className="size-4" /> Submission Context
+                            </h3>
+                            <Card className="rounded-[20px] border-[#F2F0EB] bg-[#F9FAFB] p-6 h-full shadow-sm">
+                              <div className="flex flex-col h-full gap-4">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[13px] font-bold text-ink">Analyzed Briefs</span>
+                                  <button onClick={() => setCurrentStep(2)} className="text-signal text-[12px] font-bold hover:underline underline-offset-4">MODIFY</button>
+                                </div>
+                                <div className="space-y-3 flex-1">
+                                  {formData.files.length > 0 ? (
+                                    <div className="flex flex-col gap-2">
+                                      {formData.files.slice(0, 2).map((f, i) => (
+                                        <div key={i} className="p-3 bg-white rounded-lg border border-border-subtle flex items-center gap-2 text-[13px] font-bold shadow-sm">
+                                          <File02 className="text-signal size-4" />
+                                          <span className="truncate">{f.name}</span>
+                                        </div>
+                                      ))}
+                                      {formData.files.length > 2 && (
+                                        <p className="text-[11px] text-muted-text font-bold text-center">+{formData.files.length - 2} more files</p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="p-6 border-2 border-dashed border-border-subtle rounded-xl flex flex-col items-center gap-2 opacity-50">
+                                       <HelpCircle className="size-6" />
+                                       <p className="text-[11px] font-bold uppercase tracking-widest text-center">No docs provided</p>
+                                    </div>
+                                  )}
+                                  <div className="pt-3 border-t border-border-subtle/30">
+                                    <p className="text-[14px] text-muted-text italic leading-relaxed line-clamp-3">
+                                      "{formData.prompt || "No additional text-based instructions provided for this batch."}"
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          </section>
+                        </div>
+
+                        <div className="bg-[#101828] text-white rounded-[24px] p-6 flex flex-col md:flex-row items-center justify-between gap-6 mt-4 relative overflow-hidden shadow-xl">
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-signal/10 rounded-full blur-[100px]" />
+                          <div className="flex items-center gap-4 relative z-10">
+                            <div className="size-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shadow-lg">
+                              <Zap className="size-6 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-white/50 text-[12px] font-bold uppercase tracking-widest">Resource Cost</p>
+                              <p className="text-3xl font-display font-bold tracking-tight mt-1">120 <span className="text-base opacity-40 font-medium">CREDITS</span></p>
+                            </div>
+                          </div>
+                  <div className="flex flex-col items-center md:items-end gap-2 relative z-10">
+                              <div className="flex items-center gap-2 p-1 bg-white/10 border border-white/20 rounded-lg px-3 py-1.5">
+                                 <span className="text-[11px] font-bold text-white uppercase tracking-wider">Auto-scaling Active</span>
+                              </div>
+                              <p className="text-white/40 text-[12px] font-medium">Estimated queue wait: <span className="text-white font-bold">~4.2m</span></p>
+                           </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 pt-6">
+                  <Button
+                    variant="ghost"
+                    onClick={prevStep}
+                    disabled={currentStep === 0}
+                    className={cn(
+                      "h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-10 rounded-xl sm:rounded-2xl font-bold gap-2 sm:gap-3 text-muted-text transition-all text-sm sm:text-base order-2 sm:order-1",
+                      currentStep === 0 && "opacity-0 pointer-events-none"
+                    )}
+                  >
+                    <ChevronLeft className="size-4 sm:size-5" /> Previous Step
+                  </Button>
+
+                  <div className="flex items-center gap-3 sm:gap-6 order-1 sm:order-2">
+                    <button
+                      onClick={nextStep}
+                      className="flex-1 sm:flex-none h-12 sm:h-14 md:h-16 px-8 sm:px-10 md:px-12 rounded-xl gap-3 sm:gap-4 shadow-sm hover:shadow-md transition-all text-base sm:text-lg bg-[#101828] text-white flex items-center justify-center font-bold"
+                    >
+                      {currentStep === STEPS.length - 1 ? "Start Generation" : "Continue to Next Step"}
+                      {currentStep === STEPS.length - 1 ? <Zap className="size-6" /> : <ArrowRight className="size-6" />}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+        </div>
+      </main>
+
+      {/* Modals */}
+      <Dialog open={showAddAudience} onOpenChange={setShowAddAudience}>
+        <DialogContent className="rounded-[28px] p-8">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display font-bold">Register Audience</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+            <Label className="uppercase tracking-widest text-[11px] font-bold text-muted-text">Audience Identification</Label>
+            <Input 
+              value={newAudience} 
+              onChange={(e) => setNewAudience(e.target.value)} 
+              placeholder="e.g., Silicon Valley Tech Pros (25-40)"
+              className="h-14 rounded-xl border-[#F2F0EB] bg-[#F9FAFB] focus:bg-white transition-all shadow-sm"
+            />
+          </div>
+          <DialogFooter className="gap-3">
+            <Button variant="ghost" className="h-12 px-6 font-bold" onClick={() => setShowAddAudience(false)}>Cancel</Button>
+            <Button onClick={addNewAudience} className="bg-signal text-white rounded-xl h-12 px-8 font-bold shadow-cta">Create Segment</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
+        <DialogContent className="rounded-[28px] p-8">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display font-bold">Register Product</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+            <Label className="uppercase tracking-widest text-[11px] font-bold text-muted-text">Product Identifier</Label>
+            <Input 
+              value={newProduct} 
+              onChange={(e) => setNewProduct(e.target.value)} 
+              placeholder="e.g., Cirkul Hydration Plus (Lemonade)"
+              className="h-14 rounded-xl border-[#F2F0EB] bg-[#F9FAFB] focus:bg-white transition-all shadow-sm"
+            />
+          </div>
+          <DialogFooter className="gap-3">
+            <Button variant="ghost" className="h-12 px-6 font-bold" onClick={() => setShowAddProduct(false)}>Cancel</Button>
+            <Button onClick={addNewProduct} className="bg-signal text-white rounded-xl h-12 px-8 font-bold shadow-cta">Add to Library</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
